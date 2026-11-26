@@ -1,0 +1,140 @@
+Patients
+
+CREATE TABLE Patients (
+    patient_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    first_name VARCHAR2(50 CHAR) NOT NULL,
+    last_name VARCHAR2(50 CHAR) NOT NULL,
+    dob DATE NOT NULL,
+    sex VARCHAR2(20 CHAR),
+    phone VARCHAR2(25 CHAR)
+);
+
+Providers
+
+CREATE TABLE Providers (
+    provider_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    provider_name VARCHAR2(100 CHAR) NOT NULL,
+    specialty VARCHAR2(100 CHAR) NOT NULL
+);
+
+Diagnoses
+
+CREATE TABLE Diagnoses (
+    diagnosis_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    diagnosis_code VARCHAR2(20 CHAR) NOT NULL UNIQUE,
+    diagnosis_name VARCHAR2(150 CHAR) NOT NULL
+);
+
+Treatments
+
+CREATE TABLE Treatments (
+    treatment_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    treatment_name VARCHAR2(150 CHAR) NOT NULL,
+    description VARCHAR2(500 CHAR)
+);
+
+Medications
+
+CREATE TABLE Medications (
+    medication_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    medication_name VARCHAR2(150 CHAR) NOT NULL,
+    strength VARCHAR2(50 CHAR) NOT NULL,
+    dosage_form VARCHAR2(50 CHAR) NOT NULL
+);
+
+Encounters
+
+CREATE TABLE Encounters (
+    encounter_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    patient_id NUMBER(10) NOT NULL
+        REFERENCES Patients(patient_id),
+    provider_id NUMBER(10) NOT NULL
+        REFERENCES Providers(provider_id),
+    encounter_date DATE NOT NULL,
+    duration_minutes NUMBER(5,0) NOT NULL
+        CHECK (duration_minutes > 0),
+    cost NUMBER(10,2) NOT NULL
+        CHECK (cost >= 0)
+);
+
+Encounter_Treatments
+
+CREATE TABLE Encounter_Treatments (
+    encounter_treatment_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    encounter_id NUMBER(10) NOT NULL
+        REFERENCES Encounters(encounter_id),
+    treatment_id NUMBER(10) NOT NULL
+        REFERENCES Treatments(treatment_id),
+    quantity NUMBER(5,0) DEFAULT 1 NOT NULL
+        CHECK (quantity > 0)
+);
+
+Prescriptions
+
+CREATE TABLE Prescriptions (
+    prescription_id NUMBER(10)
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    encounter_id NUMBER(10) NOT NULL
+        REFERENCES Encounters(encounter_id),
+    medication_id NUMBER(10) NOT NULL
+        REFERENCES Medications(medication_id),
+    provider_id NUMBER(10) NOT NULL
+        REFERENCES Providers(provider_id),
+    dosage VARCHAR2(100 CHAR) NOT NULL,
+    frequency VARCHAR2(100 CHAR) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    CHECK (end_date >= start_date)
+);
+
+Encounter_Diagnoses
+
+CREATE TABLE Encounter_Diagnoses (
+    encounter_id NUMBER(10)
+        REFERENCES Encounters(encounter_id),
+    diagnosis_id NUMBER(10)
+        REFERENCES Diagnoses(diagnosis_id),
+    is_primary CHAR(1) DEFAULT 'N' NOT NULL
+        CHECK (is_primary IN ('Y', 'N')),
+    PRIMARY KEY (encounter_id, diagnosis_id)
+);
+
+Making sure every encounter has only one main diagnosis
+
+CREATE UNIQUE INDEX ux_primary_diagnosis
+ON Encounter_Diagnoses (
+    CASE WHEN is_primary = 'Y' THEN encounter_id END
+);
+
+Indexes for foreign keys
+
+CREATE INDEX ix_Encounters_patient_id
+ON Encounters (patient_id);
+
+CREATE INDEX ix_Encounters_provider_id
+ON Encounters (provider_id);
+
+CREATE INDEX ix_Encounter_Di_diagnosis_id
+ON Encounter_Diagnoses (diagnosis_id);
+
+CREATE INDEX ix_Encounter_Tr_encounter_id
+ON Encounter_Treatments (encounter_id);
+
+CREATE INDEX ix_Encounter_Tr_treatment_id
+ON Encounter_Treatments (treatment_id);
+
+CREATE INDEX ix_Prescription_encounter_id
+ON Prescriptions (encounter_id);
+
+CREATE INDEX ix_Prescription_medication_id
+ON Prescriptions (medication_id);
+
+CREATE INDEX ix_Prescription_provider_id
+ON Prescriptions (provider_id);
