@@ -1,1 +1,56 @@
+CREATE TABLE DIM_Patient (
+    patient_key NUMBER GENERATED ALWAYS AS IDENTITY
+        PRIMARY KEY,
+    patient_id NUMBER,
+    sex VARCHAR2(20),
+    date_of_birth DATE,
+    age NUMBER
+);
+CREATE TABLE DIM_Diagnosis (
+    diagnosis_key NUMBER GENERATED ALWAYS AS IDENTITY
+        PRIMARY KEY,
+    diagnosis_id NUMBER,
+    diagnosis_code VARCHAR2(20),
+    diagnosis_name VARCHAR2(150)
+);
+CREATE TABLE DIM_Time (
+    time_key NUMBER PRIMARY KEY,
+    full_date DATE,
+    day NUMBER,
+    month NUMBER,
+    month_name VARCHAR2(20),
+    quarter NUMBER,
+    year NUMBER,
+    season VARCHAR2(20)
+);
+CREATE TABLE DIM_Provider (
+    provider_key NUMBER GENERATED ALWAYS AS IDENTITY
+        PRIMARY KEY,
+    provider_id NUMBER,
+    provider_name VARCHAR2(100),
+    specialty VARCHAR2(100)
+);
+CREATE TABLE Fact_Encounters (
+    encounter_fact_id NUMBER
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    encounter_id NUMBER,
+    patient_key NUMBER REFERENCES Dim_Patient(patient_key),
+    diagnosis_key NUMBER REFERENCES Dim_Diagnosis(diagnosis_key),
+    time_key NUMBER REFERENCES Dim_Time(time_key),
+    provider_key NUMBER REFERENCES Dim_Provider(provider_key),
+    visit_duration_minutes NUMBER,
+    encounter_cost NUMBER(10,2)
+);
+CREATE TABLE Fact_Encounters (
+    fact_encounter_id NUMBER
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    encounter_id NUMBER,
+    patient_key NUMBER REFERENCES Dim_Patient(patient_key),
+    diagnosis_key NUMBER REFERENCES Dim_Diagnosis(diagnosis_key),
+    time_key NUMBER REFERENCES Dim_Time(time_key),
+    provider_key NUMBER REFERENCES Dim_Provider(provider_key),
+    visit_duration_minutes NUMBER,
+    encounter_cost NUMBER(10,2)
+);
+
 
