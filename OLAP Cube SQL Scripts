@@ -1,1 +1,73 @@
+# Treatment Trends Cube
+SELECT
+    t.treatment_name,
+    EXTRACT(YEAR FROM e.encounter_date) AS encounter_year,
+    COUNT(et.encounter_treatment_id) AS treatment_count,
+    SUM(et.quantity) AS total_quantity
+FROM Encounters e
+JOIN Encounter_Treatments et
+    ON e.encounter_id = et.encounter_id
+JOIN Treatments t
+    ON et.treatment_id = t.treatment_id
+GROUP BY CUBE (
+    t.treatment_name,
+    EXTRACT(YEAR FROM e.encounter_date)
+)
+ORDER BY
+    t.treatment_name,
+    encounter_year;
+
+# Seasonal Diagnosis Cube
+SELECT
+    d.diagnosis_name,
+    CASE
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (12, 1, 2) THEN 'Winter'
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (3, 4, 5) THEN 'Spring'
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (6, 7, 8) THEN 'Summer'
+        ELSE 'Fall'
+    END AS season,
+    COUNT(DISTINCT e.encounter_id) AS diagnosis_count
+FROM Encounters e
+JOIN Encounter_Diagnoses ed
+    ON e.encounter_id = ed.encounter_id
+JOIN Diagnoses d
+    ON ed.diagnosis_id = d.diagnosis_id
+GROUP BY CUBE (
+    d.diagnosis_name,
+    CASE
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (12, 1, 2) THEN 'Winter'
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (3, 4, 5) THEN 'Spring'
+        WHEN EXTRACT(MONTH FROM e.encounter_date)
+             IN (6, 7, 8) THEN 'Summer'
+        ELSE 'Fall'
+    END
+)
+ORDER BY
+    d.diagnosis_name,
+    season;
+
+#Cost Efficiency Cube
+SELECT
+    p.provider_name,
+    p.specialty,
+    COUNT(e.encounter_id) AS total_encounters,
+    ROUND(AVG(e.cost), 2) AS average_cost,
+    ROUND(AVG(e.duration_minutes), 2)
+        AS average_visit_duration,
+    SUM(e.cost) AS total_cost
+FROM Encounters e
+JOIN Providers p
+    ON e.provider_id = p.provider_id
+GROUP BY CUBE (
+    p.provider_name,
+    p.specialty
+)
+ORDER BY
+    p.provider_name,
+    p.specialty;
 
